@@ -23,6 +23,7 @@ export class AppComponent {
   readonly toast = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
   readonly filter = signal<'all' | 'pending' | 'done'>('all');
+  readonly confirmClearAll = signal(false);
 
   readonly visibleItems = computed(() => {
     const items = this.list.items();
@@ -99,9 +100,17 @@ export class AppComponent {
     this.showToast('Eliminado');
   }
 
-  clearAll(): void {
+  askClearAll(): void {
     if (!this.list.items().length) return;
-    if (!confirm('¿Eliminar todos los productos de la lista?')) return;
+    this.confirmClearAll.set(true);
+  }
+
+  cancelClearAll(): void {
+    this.confirmClearAll.set(false);
+  }
+
+  confirmClearAllAction(): void {
+    this.confirmClearAll.set(false);
     this.list.clearAll();
     this.showToast('Lista vacía');
   }
