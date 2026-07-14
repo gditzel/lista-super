@@ -1,0 +1,191 @@
+<div class="app-shell">
+  <header class="top-bar">
+    <div>
+      <p class="brand">Lista Super</p>
+      <h1 class="headline">Tu carrito en marcha</h1>
+    </div>
+    <div class="total-chip" aria-live="polite">
+      <span class="total-label">Total aprox.</span>
+      <strong>{{ list.estimatedTotal() | currency: 'ARS':'symbol-narrow':'1.0-2' }}</strong>
+      <span class="total-meta">
+        {{ list.pricedCount() }}/{{ list.items().length || 0 }} con precio
+      </span>
+    </div>
+  </header>
+
+  <section class="stats" aria-label="Progreso">
+    <button
+      type="button"
+      class="stat"
+      [class.active]="filter() === 'all'"
+      (click)="filter.set('all')"
+    >
+      <span>{{ list.items().length }}</span>
+      Todos
+    </button>
+    <button
+      type="button"
+      class="stat"
+      [class.active]="filter() === 'pending'"
+      (click)="filter.set('pending')"
+    >
+      <span>{{ list.pendingCount() }}</span>
+      Pendientes
+    </button>
+    <button
+      type="button"
+      class="stat"
+      [class.active]="filter() === 'done'"
+      (click)="filter.set('done')"
+    >
+      <span>{{ list.checkedCount() }}</span>
+      En carrito
+    </button>
+  </section>
+
+  @if (list.items().length) {
+    <div class="list-tools">
+      <button type="button" class="clear-all-btn" (click)="clearAll()">
+        Eliminar todos
+      </button>
+    </div>
+  }
+
+  <section class="list-section" aria-label="Lista de compras">
+    @if (!visibleItems().length) {
+      <div class="empty">
+        <p class="empty-title">La lista está vacía</p>
+        <p class="empty-copy">
+          Agregá productos a mano o pegá el chat de WhatsApp con tu pareja.
+        </p>
+      </div>
+    } @else {
+      <ul class="item-list">
+        @for (item of visibleItems(); track item.id) {
+          <li class="item" [class.checked]="item.checked">
+            <button
+              type="button"
+              class="check"
+              [attr.aria-pressed]="item.checked"
+              [attr.aria-label]="item.checked ? 'Sacar del carrito' : 'Marcar en carrito'"
+              (click)="toggle(item)"
+            >
+              @if (item.checked) {
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path
+                    d="M7.8 13.2 4.6 10l-1.2 1.2 4.4 4.4L17 6.4 15.8 5.2z"
+                    fill="currentColor"
+                  />
+                </svg>
+              }
+            </button>
+
+            <button type="button" class="item-main" (click)="openEdit(item)">
+              <span class="item-name">{{ item.name }}</span>
+              <span class="item-meta">
+                x{{ item.quantity }}
+                @if (lineTotal(item) != null) {
+                  · {{ lineTotal(item)! | currency: 'ARS':'symbol-narrow':'1.0-2' }}
+                } @else {
+                  · sin precio
+                }
+              </span>
+            </button>
+
+            <div class="item-actions">
+              <button
+                type="button"
+                class="icon-btn danger"
+                title="Eliminar"
+                (click)="remove(item, $event)"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M9 3h6l1 2h5v2H3V5h5l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <footer class="dock">
+    <div class="dock-actions">
+      <button type="button" class="secondary-btn" (click)="openPaste()">Pegar lista</button>
+      <button type="button" class="primary-btn" (click)="openAdd()">+ Agregar</button>
+    </div>
+  </footer>
+</div>
+
+@if (panel() !== 'none') {
+  <div class="scrim" (click)="closePanel()"></div>
+  <aside class="sheet" role="dialog" aria-modal="true">
+    @if (panel() === 'paste') {
+      <header class="sheet-head">
+        <h2>Pegar desde WhatsApp</h2>
+        <button type="button" class="icon-btn" (click)="closePanel()" aria-label="Cerrar">×</button>
+      </header>
+      <p class="sheet-copy">
+        Copiá el mensaje con la lista y pegalo acá. Separá un producto por línea.
+      </p>
+      <textarea
+        rows="8"
+        [ngModel]="pasteText()"
+        (ngModelChange)="pasteText.set($event)"
+        placeholder="Leche&#10;Pan integral&#10;2kg papas&#10;Aceite&#10;..."
+      ></textarea>
+      <button type="button" class="primary-btn full" (click)="importPaste()">
+        Importar ítems
+      </button>
+    }
+
+    @if (panel() === 'item') {
+      <header class="sheet-head">
+        <h2>{{ editingId() ? 'Editar ítem' : 'Nuevo ítem' }}</h2>
+        <button type="button" class="icon-btn" (click)="closePanel()" aria-label="Cerrar">×</button>
+      </header>
+      <label class="field">
+        <span>Producto</span>
+        <input
+          type="text"
+          [ngModel]="draftName()"
+          (ngModelChange)="draftName.set($event)"
+          placeholder="Ej: yogur natural"
+          autocomplete="off"
+        />
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>Cantidad</span>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            [ngModel]="draftQty()"
+            (ngModelChange)="draftQty.set(+$event || 1)"
+          />
+        </label>
+        <label class="field">
+          <span>Precio unit.</span>
+          <input
+            type="number"
+            min="0"
+            step="50"
+            [ngModel]="draftPrice()"
+            (ngModelChange)="draftPrice.set($event === '' || $event == null ? null : +$event)"
+            placeholder="Opcional"
+          />
+        </label>
+      </div>
+      <button type="button" class="primary-btn full" (click)="saveItem()">Guardar</button>
+    }
+  </aside>
+}
+
+@if (toast()) {
+  <div class="toast" role="status">{{ toast() }}</div>
+}

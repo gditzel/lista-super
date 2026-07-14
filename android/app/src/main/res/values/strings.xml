@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Lista Super</string>
+    <string name="title_activity_main">Lista Super</string>
+    <string name="package_name">com.listasuper.app</string>
+    <string name="custom_url_scheme">com.listasuper.app</string>
+</resources>
