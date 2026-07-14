@@ -20,10 +20,10 @@ npm start
 
 Abrí `http://localhost:4200`.
 
-## Instalar en el celular
+## Publicación (GitHub Pages)
 
-1. Buildeá producción: `npm run build`
-2. Serví la carpeta `dist/lista-super/browser` por HTTPS (o con un túnel tipo ngrok / Cloudflare Tunnel)
-3. En Chrome/Safari: menú → **Instalar app** / **Agregar a pantalla de inicio**
+Cada push a `main` despliega automáticamente.
 
-En desarrollo el service worker está desactivado; la instalación full funciona con el build de producción.
+URL: https://gditzel.github.io/lista-super/
+
+En el iPhone: Safari → esa URL → Compartir → **Agregar a pantalla de inicio**.
